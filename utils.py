@@ -1,11 +1,13 @@
-from pyppeteer.errors import PageError
-from db_utils import store, check_crawl_required
+import pyppeteer
+
+from db_utils import does_url_exist, store_url
 
 
 async def crawl_author(browser, url):
     page = await browser.newPage()
     await page.goto(url)
 
+    # Expand all links hidden behind SHOW ALL button
     await show_all_doc_links(page)
 
     doc_selector = '.gsc_a_at'
@@ -13,12 +15,15 @@ async def crawl_author(browser, url):
     for doc in docs:
         external_doc_url = await get_doc_url(page, doc)
 
-        if external_doc_url and check_crawl_required(external_doc_url):
-            # Only do the below if the URL needs to be crawled/re-crawled
-            await crawl_doc(browser, external_doc_url)
+        if external_doc_url and not does_url_exist(external_doc_url):
+            store_url(external_doc_url)
+        # if external_doc_url and check_crawl_required(external_doc_url):
+        #     # Only do the below if the URL needs to be crawled/re-crawled
+        #     await crawl_doc(browser, external_doc_url)
 
         # Go back to the author's page
         await close_doc_modal(page)
+        await page.waitFor(3000)
 
 
 async def show_all_doc_links(page):
@@ -35,7 +40,11 @@ async def show_all_doc_links(page):
 async def get_doc_url(page, doc):
     # Open the modal
     await doc.click()
-    await page.waitForResponse(lambda res: res.status == 200)
+    try:
+        await page.waitForResponse(lambda res: res.status == 200)
+    except pyppeteer.errors.TimeoutError:
+        await page.screenshot({'path': 'TimeoutError.png', 'fullPage': True})
+        print("TimeoutError on get_doc_url")
 
     # Get the link to the external document
     external_doc_anchor = await page.querySelector('.gsc_vcd_title_link')
@@ -50,17 +59,6 @@ async def close_doc_modal(page):
     closeButton = await page.querySelector('#gs_md_cita-d-x')
     await closeButton.click()
     await page.waitFor(1000)
-
-
-async def crawl_doc(browser, url):
-    page = await browser.newPage()
-    print("CRAWLING: ", url)
-
-    try:
-        await page.goto(url)
-        store(page.url, await page.content())
-    except PageError:
-        print("Problem Occurred Crawling ", url)
 
 
 async def get_href_for_node(node):

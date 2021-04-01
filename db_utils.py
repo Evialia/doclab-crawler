@@ -28,7 +28,52 @@ def store(url, content):
     )
     db.commit()
 
-    return cursor.rowcount
+    count = cursor.rowcount
+    close_connection(db, cursor)
+    return count
+
+
+def store_content(url, content):
+    current_time = date.today().strftime('%Y-%m-%d')
+    db, cursor = get_connection()
+
+    cursor.execute(
+        "UPDATE pages SET content=%(content)s, last_crawl=%(last_crawl)s WHERE url=%(url)s",
+        {'content': content, 'last_crawl': current_time, 'url': url}
+    )
+    db.commit()
+
+    count = cursor.rowcount
+    close_connection(db, cursor)
+    return count
+
+
+def store_url(url):
+    db, cursor = get_connection()
+
+    cursor.execute(
+        "INSERT INTO pages (url) VALUES (%(url)s)",
+        {'url': url}
+    )
+    db.commit()
+
+    count = cursor.rowcount
+    close_connection(db, cursor)
+    return count
+
+
+def does_url_exist(url):
+    db, cursor = get_connection()
+    cursor.execute(
+        "SELECT * FROM pages WHERE url = %(url)s",
+        {'url': url}
+    )
+
+    cursor.fetchall()
+    count = cursor.rowcount
+    close_connection(db, cursor)
+
+    return count == 1
 
 
 def check_crawl_required(url):
@@ -40,8 +85,29 @@ def check_crawl_required(url):
         "SELECT 1 FROM pages WHERE url = %s AND last_crawl > %s",
         (url, last_week)
     )
-    cursor.fetchall()
 
-    # Return true if NO result is found
-    return cursor.rowcount == 0
+    cursor.fetchall()
+    count = cursor.rowcount
+    close_connection(db, cursor)
+
+    return count == 0
+
+
+def get_next_url():
+    last_week = (date.today() - timedelta(days=7)).strftime('%Y-%m-%d')
+    db, cursor = get_connection()
+    cursor.execute("SELECT url FROM pages WHERE (last_crawl IS NULL OR last_crawl < %(date)s) AND locked = 0 LIMIT 1", {'date': last_week})
+    result = cursor.fetchone()
+
+    close_connection(db, cursor)
+
+    if result is not None:
+        return result[0]
+    else:
+        return None
+
+
+def close_connection(db, cursor):
+    cursor.close()
+    db.close()
 

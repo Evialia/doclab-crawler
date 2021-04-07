@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  mysql:
+    image: mysql:5.7
+    restart: always
+    container_name: mysql
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - ./docker/db/data:/var/lib/mysql
+      - ./docker/db/init:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: doclab
+
+  extract_authors:
+    build:
+      context: ./
+      dockerfile: ./docker/crawler/Dockerfile
+    restart: always
+    volumes:
+      - ./:/usr/src/app
+    command: python ./extract_authors.py
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: password
+
+  extract_documents:
+    build:
+      context: ./
+      dockerfile: ./docker/crawler/Dockerfile
+    restart: always
+    scale: 3
+    volumes:
+      - ./:/usr/src/app
+    command: python ./extract_documents.py
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: password
+
+  extract_documents_content:
+    build:
+      context: ./
+      dockerfile: ./docker/crawler/Dockerfile
+    restart: always
+    scale: 3
+    volumes:
+      - ./:/usr/src/app
+    command: python ./extract_documents_content.py
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: password

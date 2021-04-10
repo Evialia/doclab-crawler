@@ -14,13 +14,14 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "INSERT INTO documents (url, content, indexed, last_crawl, locked) VALUES (%(url)s, %(content)s, %(indexed)s, %(last_crawl)s, %(locked)s)",
+            "INSERT INTO documents (url, content, indexed, last_crawl, locked, screenshot) VALUES (%(url)s, %(content)s, %(indexed)s, %(last_crawl)s, %(locked)s, %(screenshot)s)",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
                 'indexed': entity.is_indexed(),
                 'last_crawl': entity.get_last_crawl(),
-                'locked': entity.is_locked()
+                'locked': entity.is_locked(),
+                'screenshot': entity.get_screenshot()
             }
         )
         self.db.commit()
@@ -33,13 +34,14 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s WHERE id=%(id)s",
+            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s WHERE id=%(id)s",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
                 'indexed': entity.is_indexed(),
                 'last_crawl': entity.get_last_crawl(),
                 'locked': entity.is_locked(),
+                'screenshot': entity.get_screenshot(),
                 'id': entity.get_id()
             }
         )
@@ -84,7 +86,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "SELECT id, content FROM documents WHERE indexed = 0 LIMIT 1"
+            "SELECT * FROM documents WHERE indexed = 0 LIMIT 1"
         )
         result = self.cursor.fetchone()
 
@@ -103,5 +105,6 @@ class DocumentRepository(Repository):
         document.set_indexed(result['indexed'] if 'indexed' in result else None)
         document.set_last_crawl(result['last_crawl'] if 'last_crawl' in result else None)
         document.set_description(result['description'] if 'description' in result else None)
+        document.set_screenshot(result['screenshot'] if 'screenshot' in result else None)
 
         return document

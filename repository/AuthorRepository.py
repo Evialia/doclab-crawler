@@ -2,7 +2,6 @@ from datetime import date, timedelta
 
 from entity.Author import Author
 from repository.Repository import Repository
-from entity.Document import Document
 from utils.Connection import Connection
 
 

@@ -1,5 +1,8 @@
 import asyncio
 import os
+import random
+import string
+
 import time
 from datetime import date
 
@@ -46,6 +49,18 @@ async def scrape_contents(browser, document):
         await browser_page.goto(document.get_url())
         print("Scraping... ", document.get_url())
         document.set_content(await browser_page.content())
+
+
+        file_name = ''.join(random.choice(string.ascii_lowercase) for i in range(30)) + '.png'
+        path = './media/' + file_name
+
+        print("Screenshotting to: ", path)
+        print()
+        await browser_page.screenshot({
+            'path': path
+        })
+        document.set_screenshot(file_name)
+
         print("Done!")
     except:
         print("Problem Occurred Scraping ", document.get_url())

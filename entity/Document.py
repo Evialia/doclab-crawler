@@ -7,6 +7,7 @@ class Document:
         self.last_crawl = None
         self.locked = None
         self.description = None
+        self.screenshot = None
 
     def get_id(self):
         return self.id
@@ -55,4 +56,11 @@ class Document:
 
     def set_description(self, description):
         self.description = description
+        return self
+
+    def get_screenshot(self):
+        return self.description
+
+    def set_screenshot(self, screenshot):
+        self.screenshot = screenshot
         return self

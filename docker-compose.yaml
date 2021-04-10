@@ -16,21 +16,21 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: doclab
 
-  extract_authors:
+  author_collector:
     build:
       context: ./
       dockerfile: ./docker/crawler/Dockerfile
     restart: always
     volumes:
       - ./:/usr/src/app
-    command: python ./extract_authors.py
+    command: python ./author_collector.py
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: root
       DB_PASS: password
 
-  extract_documents:
+  document_collector:
     build:
       context: ./
       dockerfile: ./docker/crawler/Dockerfile
@@ -38,14 +38,14 @@ services:
     scale: 3
     volumes:
       - ./:/usr/src/app
-    command: python ./extract_documents.py
+    command: python ./document_collector.py
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: root
       DB_PASS: password
 
-  extract_documents_content:
+  document_scraper:
     build:
       context: ./
       dockerfile: ./docker/crawler/Dockerfile
@@ -53,7 +53,7 @@ services:
     scale: 3
     volumes:
       - ./:/usr/src/app
-    command: python ./extract_documents_content.py
+    command: python ./document_scraper.py
     environment:
       DB_HOST: mysql
       DB_PORT: 3306

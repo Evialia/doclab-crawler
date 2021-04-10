@@ -5,6 +5,7 @@ import time
 
 load_dotenv()
 
+
 class Connection:
     def __init__(self):
         self.db = False
@@ -19,7 +20,6 @@ class Connection:
 
         return self.db, self.cursor
 
-
     def attempt_connection(self):
         try:
             print("Attempting to get connection")
@@ -31,13 +31,12 @@ class Connection:
                 database=os.getenv('DB_NAME'),
             )
             self.db = connection
-            self.cursor = self.db.cursor()
+            self.cursor = self.db.cursor(dictionary=True)
 
         except mysql.connector.Error as err:
             print("Could not get connection: {}".format(err))
             self.db = False
             self.cursor = False
-
 
     def get_connection(self):
         print("Attempting to connect DB...")
@@ -63,7 +62,6 @@ class Connection:
             time.sleep(int(os.getenv('CHECK_DB_WAIT')))
 
         print("Schema initialized!")
-
 
     def close(self):
         self.cursor.close()

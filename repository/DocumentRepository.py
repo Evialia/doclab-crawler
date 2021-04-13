@@ -14,14 +14,17 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "INSERT INTO documents (url, content, indexed, last_crawl, locked, screenshot) VALUES (%(url)s, %(content)s, %(indexed)s, %(last_crawl)s, %(locked)s, %(screenshot)s)",
+            "INSERT INTO documents (url, content, indexed, last_crawl, locked, screenshot, title, description, authors) VALUES (%(url)s, %(content)s, %(indexed)s, %(last_crawl)s, %(locked)s, %(screenshot)s, %(title)s, %(description)s, %(authors)s)",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
                 'indexed': entity.is_indexed(),
                 'last_crawl': entity.get_last_crawl(),
                 'locked': entity.is_locked(),
-                'screenshot': entity.get_screenshot()
+                'screenshot': entity.get_screenshot(),
+                'title': entity.get_title(),
+                'description': entity.get_description(),
+                'authors': entity.get_authors()
             }
         )
         self.db.commit()
@@ -34,7 +37,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s WHERE id=%(id)s",
+            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s, title=%(title)s, description=%(description)s, authors=%(authors) WHERE id=%(id)s",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
@@ -42,7 +45,10 @@ class DocumentRepository(Repository):
                 'last_crawl': entity.get_last_crawl(),
                 'locked': entity.is_locked(),
                 'screenshot': entity.get_screenshot(),
-                'id': entity.get_id()
+                'id': entity.get_id(),
+                'title': entity.get_title(),
+                'description': entity.get_description(),
+                'authors': entity.get_authors()
             }
         )
         self.db.commit()
@@ -106,5 +112,7 @@ class DocumentRepository(Repository):
         document.set_last_crawl(result['last_crawl'] if 'last_crawl' in result else None)
         document.set_description(result['description'] if 'description' in result else None)
         document.set_screenshot(result['screenshot'] if 'screenshot' in result else None)
+        document.set_title(result['title'] if 'title' in result else None)
+        document.set_authors(result['authors'] if 'authors' in result else None)
 
         return document

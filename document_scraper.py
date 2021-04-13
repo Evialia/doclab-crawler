@@ -2,13 +2,11 @@ import asyncio
 import os
 import random
 import string
-
+import pyppeteer
 import time
 from datetime import date
-
-import pyppeteer
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-
 from repository.DocumentRepository import DocumentRepository
 
 load_dotenv()
@@ -33,6 +31,7 @@ async def document_scraper():
             latest_doc.set_indexed(False)
             latest_doc.set_locked(False)
             latest_doc.set_last_crawl(date.today().strftime('%Y-%m-%d'))
+
             document_repo.update(latest_doc)
 
             latest_doc = document_repo.find_latest_uncrawled()
@@ -48,14 +47,13 @@ async def scrape_contents(browser, document):
     try:
         await browser_page.goto(document.get_url())
         print("Scraping... ", document.get_url())
-        document.set_content(await browser_page.content())
-
+        parser = BeautifulSoup(await browser_page.content(), "html.parser")
+        document.set_content(str(parser.find("head")))
 
         file_name = ''.join(random.choice(string.ascii_lowercase) for i in range(30)) + '.png'
         path = './media/' + file_name
 
         print("Screenshotting to: ", path)
-        print()
         await browser_page.screenshot({
             'path': path
         })

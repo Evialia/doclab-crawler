@@ -1,5 +1,7 @@
 import asyncio
 import os
+from datetime import date
+
 import time
 
 import pyppeteer
@@ -28,6 +30,7 @@ async def document_collector():
             await crawl_author(browser, latest_author, document_repo)
 
             latest_author.set_locked(False)
+            latest_author.set_last_crawl(date.today().strftime('%Y-%m-%d'))
             author_repo.update(latest_author)
 
             latest_author = author_repo.find_latest()

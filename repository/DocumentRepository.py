@@ -37,7 +37,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s, title=%(title)s, description=%(description)s, authors=%(authors) WHERE id=%(id)s",
+            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s, title=%(title)s, description=%(description)s, authors=%(authors)s WHERE id=%(id)s",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
@@ -92,7 +92,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "SELECT * FROM documents WHERE indexed = 0 LIMIT 1"
+            "SELECT * FROM documents WHERE content IS NOT NULL AND indexed = 0 LIMIT 1"
         )
         result = self.cursor.fetchone()
 

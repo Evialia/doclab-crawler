@@ -1,4 +1,6 @@
 import asyncio
+import json
+
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -15,29 +17,34 @@ async def extract_terms():
 
     while document is not False:
         html_content = document.get_content()
-        dictionary_repo.delete_by_document(document)
+        if html_content is not None:
+            print("Extracting data from ", document.get_url())
+            dictionary_repo.delete_by_document(document)
 
-        # Extract and process title terms
-        title = extract_title(html_content)
-        if title is not None:
-            document.set_title(title)
-            store_text_words(title, document, dictionary_repo)
+            # Extract and process title terms
+            title = extract_title(html_content)
+            if title is not None:
+                words_frq = preprocess_text(title)
+                document.set_title(title)
+                store_text_words(words_frq, document, dictionary_repo)
 
-        # Extract document description
-        description = extract_description(html_content)
-        if description is not None:
-            document.set_description(description)
-            store_text_words(description, document, dictionary_repo)
+            # Extract document description
+            description = extract_description(html_content)
+            if description is not None:
+                words_frq = preprocess_text(description)
+                document.set_description(description)
+                store_text_words(words_frq, document, dictionary_repo)
 
-        contributors = extract_contributors(html_content)
-        if contributors is not None:
-            document.set_authors(contributors)
-            store_text_words(contributors, document, dictionary_repo)
+            # Extract document contributors
+            contributors = extract_contributors(html_content)
+            if contributors is not None:
+                document.set_authors(json.dumps(contributors))
+                store_contributors(contributors, document, dictionary_repo)
 
-        # Do indexing here
-        document.set_indexed(True)
-
-        doc_repo.update(document)
+            document.set_indexed(True)
+            doc_repo.update(document)
+            print("Done!")
+            print()
         document = doc_repo.find_latest_unindexed()
 
 
@@ -91,24 +98,26 @@ def extract_contributors(html_content):
     parser = BeautifulSoup(html_content, "html.parser")
 
     contributors = parser.findAll("meta", {"name": "DC.Contributor"})
-    if contributors is None:
+    if len(contributors) < 1:
         contributors = parser.findAll("meta", {"name": "DC.contributor"})
-    if contributors is None:
+    if len(contributors) < 1:
         contributors = parser.findAll("meta", {"name": "dc.contributor"})
-    if contributors is None:
+    if len(contributors) < 1:
         contributors = parser.findAll("meta", {"name": "dc.Contributor"})
-    if contributors is None:
+    if len(contributors) < 1:
+        contributors = parser.findAll("meta", {"name": "DC.Contributor.PersonalName"})
+    if len(contributors) < 1:
+        contributors = parser.findAll("meta", {"property": "article:author"})
+    if len(contributors) < 1:
         contributors = parser.findAll("meta", {"property": "og:contributor"})
-    if contributors is None:
+    if len(contributors) < 1:
         contributors = parser.findAll("meta", {"name": "dc.Creator"})
-    if contributors is None:
+    if len(contributors) < 1:
         contributors = parser.findAll("meta", {"name": "dc.creator"})
 
     contributor_names = []
     for contributor in contributors:
         contributor_names.append(contributor["content"])
-
-    print("CONTRIBUTORS >> ", contributor_names)
     return contributor_names
 
 
@@ -128,17 +137,23 @@ def preprocess_text(text):
     return word_frq
 
 
-def store_text_words(text, document, dictionary_repo):
-    words_frq = preprocess_text(text)
-
+def store_text_words(words_frq, document, dictionary_repo):
     for word, frq in words_frq.items():
         dictionary = Dictionary()
         dictionary.set_document_id(document.get_id())
         dictionary.set_term(word)
         dictionary.set_term_frequency(frq)
 
-        if dictionary_repo.find_by_term_and_doc(dictionary.get_term(), document) is False:
-            dictionary_repo.add(dictionary)
+        try:
+            if dictionary_repo.find_by_term_and_doc(dictionary.get_term(), document) is False:
+                dictionary_repo.add(dictionary)
+        except:
+            print("Problem Occurred Storing Word in Dictionary", dictionary.get_term())
+
+
+def store_contributors(contributors, document, dictionary_repo):
+    contributors_frq = {contributor: 1 for contributor in contributors}
+    store_text_words(contributors_frq, document, dictionary_repo)
 
 
 asyncio.get_event_loop().run_until_complete(extract_terms())

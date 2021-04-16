@@ -59,3 +59,18 @@ services:
       DB_PORT: 3306
       DB_USER: root
       DB_PASS: password
+
+    term_collector:
+      build:
+        context: ./
+        dockerfile: ./docker/crawler/Dockerfile
+      restart: always
+      scale: 1
+      volumes:
+        - ./:/usr/src/app
+      command: python ./term_collector.py
+      environment:
+        DB_HOST: mysql
+        DB_PORT: 3306
+        DB_USER: root
+        DB_PASS: password

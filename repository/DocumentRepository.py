@@ -14,7 +14,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "INSERT INTO documents (url, content, indexed, last_crawl, locked, screenshot, title, description, authors) VALUES (%(url)s, %(content)s, %(indexed)s, %(last_crawl)s, %(locked)s, %(screenshot)s, %(title)s, %(description)s, %(authors)s)",
+            "INSERT INTO documents (url, content, indexed, last_crawl, locked, screenshot, title, description, authors, topic, index_locked) VALUES (%(url)s, %(content)s, %(indexed)s, %(last_crawl)s, %(locked)s, %(screenshot)s, %(title)s, %(description)s, %(authors)s, %(topic)s, %(index_locked)s)",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
@@ -24,7 +24,9 @@ class DocumentRepository(Repository):
                 'screenshot': entity.get_screenshot(),
                 'title': entity.get_title(),
                 'description': entity.get_description(),
-                'authors': entity.get_authors()
+                'authors': entity.get_authors(),
+                'topic': entity.get_topic,
+                'index_locked': entity.is_index_locked()
             }
         )
         self.db.commit()
@@ -37,7 +39,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s, title=%(title)s, description=%(description)s, authors=%(authors)s WHERE id=%(id)s",
+            "UPDATE documents SET url=%(url)s, content=%(content)s, indexed=%(indexed)s, index_locked=%(index_locked)s, last_crawl=%(last_crawl)s, locked=%(locked)s, screenshot=%(screenshot)s, title=%(title)s, description=%(description)s, authors=%(authors)s, topic=%(topic)s WHERE id=%(id)s",
             {
                 'url': entity.get_url(),
                 'content': entity.get_content(),
@@ -48,7 +50,9 @@ class DocumentRepository(Repository):
                 'id': entity.get_id(),
                 'title': entity.get_title(),
                 'description': entity.get_description(),
-                'authors': entity.get_authors()
+                'authors': entity.get_authors(),
+                'topic': entity.get_topic(),
+                'index_locked': entity.is_index_locked()
             }
         )
         self.db.commit()
@@ -92,7 +96,7 @@ class DocumentRepository(Repository):
             return False
 
         self.cursor.execute(
-            "SELECT * FROM documents WHERE content IS NOT NULL AND indexed = 0 LIMIT 1"
+            "SELECT * FROM documents WHERE content IS NOT NULL AND indexed = 0 AND index_locked=0 LIMIT 1"
         )
         result = self.cursor.fetchone()
 
@@ -114,5 +118,7 @@ class DocumentRepository(Repository):
         document.set_screenshot(result['screenshot'] if 'screenshot' in result else None)
         document.set_title(result['title'] if 'title' in result else None)
         document.set_authors(result['authors'] if 'authors' in result else None)
+        document.set_topic(result['topic'] if 'topic' in result else None)
+        document.set_index_locked(result['index_locked'] if 'index_locked' in result else None)
 
         return document

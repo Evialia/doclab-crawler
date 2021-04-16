@@ -14,7 +14,7 @@ def train_topic_classifier_model():
     train_documents_text = train_documents_df['text'].tolist()
     train_documents_topics = train_documents_df['topic'].tolist()
 
-    print('Training the Naïve Bayes Model...')
+    print('Training the Multinomial Naïve Bayes Model...')
     trained_model = multi_nb_clf_train(count_transformer, tfidf_transformer, train_documents_text, train_documents_topics)
 
     print("Storing trained model to:", multi_nb_model_filename)

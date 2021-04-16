@@ -24,7 +24,7 @@ def predict_results(test_documents_text, multi_nb_model):
     print("Loading Model's TF-IDF Transformer:", model_tfidf_transformer_filename)
     tfidf_transformer = joblib.load(model_tfidf_transformer_filename)
 
-    print('Testing the Naïve Bayes Model...')
+    print('Testing the Multinomial Naïve Bayes Model...')
     test_documents_text_counts = count_transformer.transform(test_documents_text)
     test_documents_text_tfidf = tfidf_transformer.transform(test_documents_text_counts)
     predicted = multi_nb_model.predict(test_documents_text_tfidf.toarray())

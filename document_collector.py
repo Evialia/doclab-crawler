@@ -1,15 +1,15 @@
 import asyncio
 import os
-from datetime import date
-
 import time
-
 import pyppeteer
-
+from dotenv import load_dotenv
+from datetime import date
 from entity.Document import Document
 from repository.AuthorRepository import AuthorRepository
 from repository.DocumentRepository import DocumentRepository
 from utils.dom_utils import get_href_for_node
+
+load_dotenv()
 
 
 async def document_collector():
@@ -57,6 +57,7 @@ async def crawl_author(browser, author, document_repo):
         document = Document()
         document.set_url(document_url)
         document.set_locked(False)
+        document.set_index_locked(False)
 
         if document.get_url() and not document_repo.find_by_url(document.get_url()):
             print('Adding document: ', document.get_url())

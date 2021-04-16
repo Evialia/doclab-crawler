@@ -6,9 +6,11 @@ class Document:
         self.indexed = None
         self.last_crawl = None
         self.locked = None
+        self.index_locked = None
         self.title = None
         self.description = None
         self.authors = None
+        self.topic = None
         self.screenshot = None
 
     def get_id(self):
@@ -53,6 +55,13 @@ class Document:
         self.locked = locked
         return self
 
+    def is_index_locked(self):
+        return self.index_locked
+
+    def set_index_locked(self, index_locked):
+        self.index_locked = index_locked
+        return self
+
     def get_title(self):
         return self.title
 
@@ -72,6 +81,13 @@ class Document:
 
     def set_authors(self, authors):
         self.authors = authors
+        return self
+
+    def get_topic(self):
+        return self.topic
+
+    def set_topic(self, topic):
+        self.topic = topic
         return self
 
     def get_screenshot(self):

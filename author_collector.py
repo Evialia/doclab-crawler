@@ -1,13 +1,14 @@
 import asyncio
 import os
 import time
-
 import pyppeteer
-
+from dotenv import load_dotenv
 from repository.AuthorRepository import AuthorRepository
 from utils.dom_utils import get_href_for_node
-
 from entity.Author import Author
+
+
+load_dotenv()
 
 seed_url = "https://scholar.google.co.uk/citations?view_op=view_org&hl=en&org=9117984065169182779&before_author=DgT7_5AYAAAJ&astart=0"
 pgn_btn_url_selector = '#gsc_authors_bottom_pag div button:not(:disabled)'

@@ -1,6 +1,9 @@
 import asyncio
 import json
-
+import os
+import joblib
+import time
+from dotenv import load_dotenv
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -9,43 +12,68 @@ from entity.Dictionary import Dictionary
 from repository.DictionaryRepository import DictionaryRepository
 from repository.DocumentRepository import DocumentRepository
 
+load_dotenv()
+
 
 async def extract_terms():
     doc_repo = DocumentRepository()
     dictionary_repo = DictionaryRepository()
-    document = doc_repo.find_latest_unindexed()
-
-    while document is not False:
-        html_content = document.get_content()
-        if html_content is not None:
-            print("Extracting data from ", document.get_url())
-            dictionary_repo.delete_by_document(document)
-
-            # Extract and process title terms
-            title = extract_title(html_content)
-            if title is not None:
-                words_frq = preprocess_text(title)
-                document.set_title(title)
-                store_text_words(words_frq, document, dictionary_repo)
-
-            # Extract document description
-            description = extract_description(html_content)
-            if description is not None:
-                words_frq = preprocess_text(description)
-                document.set_description(description)
-                store_text_words(words_frq, document, dictionary_repo)
-
-            # Extract document contributors
-            contributors = extract_contributors(html_content)
-            if contributors is not None:
-                document.set_authors(json.dumps(contributors))
-                store_contributors(contributors, document, dictionary_repo)
-
-            document.set_indexed(True)
-            doc_repo.update(document)
-            print("Done!")
-            print()
+    while True:
         document = doc_repo.find_latest_unindexed()
+
+        while document is not False:
+            document.set_index_locked(True)
+            doc_repo.update(document)
+
+            html_content = document.get_content()
+            if html_content is not None:
+                print("Extracting data from ", document.get_url())
+                dictionary_repo.delete_by_document(document)
+
+                # Extract and process title terms
+                title = extract_title(html_content)
+                if title is not None:
+                    words_frq = preprocess_text(title)
+                    document.set_title(title)
+                    store_text_words(words_frq, document, dictionary_repo)
+
+                # Extract document description
+                description = extract_description(html_content)
+                if description is not None:
+                    words_frq = preprocess_text(description)
+                    document.set_description(description)
+                    store_text_words(words_frq, document, dictionary_repo)
+                    assumed_topic = assume_document_topic(description)
+                    document.set_topic(assumed_topic)
+
+                # Extract document contributors
+                contributors = extract_contributors(html_content)
+                if contributors is not None:
+                    document.set_authors(json.dumps(contributors))
+                    store_contributors(contributors, document, dictionary_repo)
+
+                document.set_index_locked(False)
+                document.set_indexed(True)
+                doc_repo.update(document)
+                print("Done!")
+                print()
+            document = doc_repo.find_latest_unindexed()
+
+        print("Job complete, waiting", os.getenv('DOCUMENT_INDEXER_POLL'), "seconds for next run...")
+        time.sleep(int(os.getenv('DOCUMENT_INDEXER_POLL')))
+
+
+def assume_document_topic(description):
+    multi_nb_model = joblib.load('topic_classifier/out/multi_nb_model.pkl')
+    count_transformer = joblib.load('topic_classifier/out/model_count_transformer.pkl')
+    tfidf_transformer = joblib.load('topic_classifier/out/model_tfidf_transformer.pkl')
+
+    description_counts = count_transformer.transform([description])
+    description_tfidf = tfidf_transformer.transform(description_counts)
+
+    # Predict document topic using pre trained Multinomial Naïve Bayes ML model
+    predicted_topic = multi_nb_model.predict(description_tfidf.toarray())
+    return str(predicted_topic[0])
 
 
 def extract_description(html_content):
